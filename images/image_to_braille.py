@@ -2,16 +2,14 @@ from PIL import Image
 import numpy as np
 import sys
 
+
 class Script:
     def __init__(self, args):
         self.args = args
         self.image = None
-        self.braille_characters = ""
         self.mid_value = 127
-        for i in range(0,256):
-            self.braille_characters += chr(0x2800 + i)
 
-    def check_img(self):
+    def check_img(self): #check if image file is present and valid
         if len(self.args) > 1:
             if self.args[1] != "-h":
                 try:
@@ -29,10 +27,11 @@ class Script:
 
     def convert(self):
         self.check_img()
-        self.image = self.image.convert("L")
-        height = int(self.image.size[1]/4)
+        self.image = self.image.convert("L")    #convert image to grayscale
+        height = int(self.image.size[1]/4)      #get dimensions of the amount of braille characters needed
         width = int(self.image.size[0]/2)
 
+        braille_characters = np.array([chr(0x2800 + i) for i in range(256)])    #populate array with all braille characters
         imgarr = np.asarray(self.image)
 
         braille_img = ""
@@ -42,16 +41,16 @@ class Script:
                 for i in range(4):
                     for j in range(2):
                         try:
-                            char.append(imgarr[i+r*4][j+c*2])
+                            char.append(imgarr[i+r*4][j+c*2])   #split image array in blocks of 2x4 pixels
                         except:
-                            print("error")
+                            self.error()
                 val = 0
                 for i in range(len(char)):
-                    if char[i] < self.mid_value:
-                        val += 2**i
+                    if char[i] < self.mid_value:    #decide which pixels in a block are above the mid_value and generate a binary
+                        val += 2**i                 #number that correspondents with a braille character
                 try:
                     if val != 0:
-                        braille_img += self.braille_characters[val]
+                        braille_img += braille_characters[val]
                     else:
                         braille_img += " "
                 except:
@@ -64,6 +63,7 @@ class Script:
         f.close()
 
         print("Program finished successfully")
+
 
     def error(self, msg="error occured"):
         print('Error: ' + msg)
